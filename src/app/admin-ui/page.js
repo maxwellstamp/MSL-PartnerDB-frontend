@@ -3,14 +3,26 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-const API = `${process.env.NEXT_PUBLIC_API_URL || "https://partnersdb-backend.onrender.com/api"}/partners/`;
-const UPLOAD_API = `${process.env.NEXT_PUBLIC_API_URL || "https://partnersdb-backend.onrender.com/api"}/upload-excel/`;
+// const API = `${
+//   process.env.NEXT_PUBLIC_API_URL ||
+//   "https://partnersdb-backend.onrender.com/api"
+// }/partners/`;
+
+// const UPLOAD_API = `${
+//   process.env.NEXT_PUBLIC_API_URL ||
+//   "http://127.0.0.1:8000/api"
+
+// }/upload-excel/`;
+
+const API = "http://127.0.0.1:8000/api/partners/";
+const UPLOAD_API = `http://127.0.0.1:8000/api/upload-excel/`;
 
 const emptyForm = {
   firm_name: "",
   hq: "",
   focus_area: "",
   contact: "",
+  sector: "",
   donor_experience: "",
   current_partnership_status: "",
 };
@@ -26,6 +38,7 @@ export default function AdminUI() {
   const [file, setFile] = useState(null);
   const [uploadMessage, setUploadMessage] = useState("");
   const [uploadErrors, setUploadErrors] = useState([]);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Fetch data
   const fetchRows = async () => {
@@ -39,7 +52,9 @@ export default function AdminUI() {
       });
       if (!res.ok) {
         const errorText = await res.text();
-        throw new Error(`HTTP error! Status: ${res.status}, Message: ${errorText}`);
+        throw new Error(
+          `HTTP error! Status: ${res.status}, Message: ${errorText}`
+        );
       }
       const data = await res.json();
       setRows(data.results || data); // Handle pagination & non-pagination
@@ -72,7 +87,9 @@ export default function AdminUI() {
       });
       if (!res.ok) {
         const errorText = await res.text();
-        throw new Error(`HTTP error! Status: ${res.status}, Message: ${errorText}`);
+        throw new Error(
+          `HTTP error! Status: ${res.status}, Message: ${errorText}`
+        );
       }
       setForm(emptyForm);
       setEditingId(null);
@@ -92,6 +109,7 @@ export default function AdminUI() {
       hq: r.hq || "",
       focus_area: r.focus_area || "",
       contact: r.contact || "",
+      sector: r.sector || "",
       donor_experience: r.donor_experience || "",
       current_partnership_status: r.current_partnership_status || "",
     });
@@ -111,7 +129,9 @@ export default function AdminUI() {
       });
       if (!res.ok) {
         const errorText = await res.text();
-        throw new Error(`HTTP error! Status: ${res.status}, Message: ${errorText}`);
+        throw new Error(
+          `HTTP error! Status: ${res.status}, Message: ${errorText}`
+        );
       }
       await fetchRows();
     } catch (err) {
@@ -174,7 +194,7 @@ export default function AdminUI() {
           Create Firms
         </h1>
         {/* Excel Upload */}
-        <form onSubmit={handleUpload} className="flex items-center gap-3">
+        {/* <form onSubmit={handleUpload} className="flex items-center gap-3">
           <input
             type="file"
             accept=".xlsx,.xls"
@@ -187,6 +207,81 @@ export default function AdminUI() {
             className="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800 dark:bg-blue-800 dark:hover:bg-blue-700 transition-all font-medium"
           >
             Upload Excel
+          </button>
+        </form> */}
+        <form onSubmit={handleUpload}>
+          <div
+            className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+              isDragging
+                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                : "border-gray-300 dark:border-gray-600"
+            } hover:border-blue-400 dark:hover:border-blue-500`}
+            onDragEnter={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsDragging(true);
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsDragging(false);
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsDragging(false);
+              if (e.dataTransfer.files) {
+                setFile(e.dataTransfer.files[0]);
+                setUploadMessage("");
+                setUploadErrors([]);
+                setError(null);
+              }
+            }}
+          >
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleFileChange}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              id="file-upload"
+            />
+            <label htmlFor="file-upload" className="cursor-pointer">
+              <div className="flex flex-col items-center">
+                <svg
+                  className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.71 6L16 6a5 5 0 011 9.71M15 13l-3-3m0 0l-3 3m3-3v12"
+                  />
+                </svg>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  {file
+                    ? file.name
+                    : "Drag and drop your Excel file here, or click to browse"}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Supports .xlsx and .xls files
+                </p>
+              </div>
+            </label>
+          </div>
+          <button
+            type="submit"
+            disabled={loading || !file}
+            className="mt-4 w-full px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800 dark:bg-blue-800 dark:hover:bg-blue-700 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? "Uploading..." : "Upload Excel"}
           </button>
         </form>
       </div>
@@ -209,7 +304,10 @@ export default function AdminUI() {
       )}
 
       {/* Form */}
-      <form onSubmit={save} className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+      <form
+        onSubmit={save}
+        className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6"
+      >
         <input
           className="border px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
           placeholder="Firm Name *"
@@ -233,7 +331,9 @@ export default function AdminUI() {
           className="border px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
           placeholder="Current Partnership Status"
           value={form.current_partnership_status}
-          onChange={(e) => setForm({ ...form, current_partnership_status: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, current_partnership_status: e.target.value })
+          }
         />
         <textarea
           className="border px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all md:col-span-2"
@@ -247,7 +347,9 @@ export default function AdminUI() {
           rows={3}
           placeholder="Donor Experience"
           value={form.donor_experience}
-          onChange={(e) => setForm({ ...form, donor_experience: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, donor_experience: e.target.value })
+          }
         />
         <div className="md:col-span-2 flex gap-2">
           <button
@@ -276,16 +378,27 @@ export default function AdminUI() {
         <table className="min-w-full text-sm">
           <thead className="bg-blue-900 dark:bg-blue-900 text-white">
             <tr>
-              <th className="text-left px-4 py-3 font-semibold uppercase text-xs tracking-wide">Firm Name</th>
-              <th className="text-left px-4 py-3 font-semibold uppercase text-xs tracking-wide">HQ</th>
-              <th className="text-left px-4 py-3 font-semibold uppercase text-xs tracking-wide">Contact</th>
-              <th className="text-left px-4 py-3 font-semibold uppercase text-xs tracking-wide">Actions</th>
+              <th className="text-left px-4 py-3 font-semibold uppercase text-xs tracking-wide">
+                Firm Name
+              </th>
+              <th className="text-left px-4 py-3 font-semibold uppercase text-xs tracking-wide">
+                HQ
+              </th>
+              <th className="text-left px-4 py-3 font-semibold uppercase text-xs tracking-wide">
+                Contact
+              </th>
+              <th className="text-left px-4 py-3 font-semibold uppercase text-xs tracking-wide">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+                <td
+                  colSpan={4}
+                  className="px-4 py-6 text-center text-gray-500 dark:text-gray-400"
+                >
                   Loading...
                 </td>
               </tr>
@@ -295,9 +408,15 @@ export default function AdminUI() {
                   key={r.id}
                   className="border-b dark:border-gray-700 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
                 >
-                  <td className="px-4 py-3 text-gray-900 dark:text-white">{r.firm_name}</td>
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{r.hq || "-"}</td>
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{r.contact || "-"}</td>
+                  <td className="px-4 py-3 text-gray-900 dark:text-white">
+                    {r.firm_name}
+                  </td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
+                    {r.hq || "-"}
+                  </td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
+                    {r.contact || "-"}
+                  </td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => editRow(r)}
@@ -316,7 +435,10 @@ export default function AdminUI() {
               ))
             ) : (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+                <td
+                  colSpan={4}
+                  className="px-4 py-6 text-center text-gray-500 dark:text-gray-400"
+                >
                   No firms found
                 </td>
               </tr>

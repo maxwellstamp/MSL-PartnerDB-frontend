@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FaEdit, FaTrashAlt, FaTimes, FaSearch } from "react-icons/fa";
 import Image from "next/image";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "https://partnersdb-backend.onrender.com/api"; // Fallback for local dev
+const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api"; // Fallback for local dev
 
 export default function Page() {
   const [rows, setRows] = useState([]);
@@ -62,11 +62,10 @@ export default function Page() {
     }
   };
 
-const capitalizeFirst = (str) => {
-  if (!str) return "";
-  return str.charAt(0).toUpperCase() + str.slice(1);
-};
-
+  const capitalizeFirst = (str) => {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  };
 
   // Fetch HQ options
   const fetchHqs = async () => {
@@ -98,10 +97,7 @@ const capitalizeFirst = (str) => {
     fetchRows({ q: query, hq, page: 1 });
   };
 
-  const headers = useMemo(
-    () => ["Firm Name", "Focuse Area", "", "Action"],
-    []
-  );
+  const headers = useMemo(() => ["Firm Name", "Focuse Area", "", "Action"], []);
 
   // Edit/Delete Logic
   const handleEditClick = (e, row) => {
@@ -170,30 +166,6 @@ const capitalizeFirst = (str) => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6 lg:p-8 max-w-7xl mx-auto">
-      {/* Header with Logo and Title */}
-      <header className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <Image
-            src="/max.png"
-            alt="Company Logo"
-            width={60}
-            height={60}
-            className="rectangular"
-          />
-          <h1 className="text-3xl font-bold text-blue-900 dark:text-blue-800">
-            Maxwell
-            <span className="text-red-700 dark:text-red-800"> Stamp</span>
-            <span className="font-bold text-blue-900 dark:text-blue-800"> LTD.</span>
-          </h1>
-        </div>
-        <a
-          href="/admin-ui"
-          className="text-sm font-bold font-medium text-red-800 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors"
-        >
-          +Add New Firm
-        </a>
-      </header>
-
       {/* Search + Filter */}
       <form
         onSubmit={onSearch}
@@ -208,9 +180,7 @@ const capitalizeFirst = (str) => {
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        <button
-          className="px-6 py-3 bg-red-700 text-white rounded-lg hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 transition-all font-medium"
-        >
+        <button className="px-6 py-3 bg-red-700 text-white rounded-lg hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 transition-all font-medium">
           Search
         </button>
         <select
@@ -233,7 +203,8 @@ const capitalizeFirst = (str) => {
 
       <div className="flex items-center gap-4 mb-6">
         <h2 className="text-2xl font-bold text-red-700 dark:text-red-700 tracking-wider">
-          Firms <span className="text-blue-900 dark:text-blue-800">Directory</span>
+          Firms{" "}
+          <span className="text-blue-900 dark:text-blue-800">Directory</span>
         </h2>
       </div>
 
@@ -279,7 +250,9 @@ const capitalizeFirst = (str) => {
                         className="hidden md:block"
                       />
                       <div className="flex flex-col">
-                        <span className="text-base">{capitalizeFirst(r.firm_name)}</span>
+                        <span className="text-base">
+                          {capitalizeFirst(r.firm_name)}
+                        </span>
                         <span className="text-sm text-gray-500 dark:text-gray-400">
                           {r.firm}
                         </span>
@@ -340,15 +313,21 @@ const capitalizeFirst = (str) => {
           Previous
         </button>
         <strong className="text-sm text-red-900 dark:text-gray-900">
-          <strong className="text-sm text-blue-900 dark:text-gray-900">Page</strong>{" "}
+          <strong className="text-sm text-blue-900 dark:text-gray-900">
+            Page
+          </strong>{" "}
           {currentPage}{" "}
-          <strong className="text-sm text-blue-900 dark:text-gray-900">of</strong>{" "}
+          <strong className="text-sm text-blue-900 dark:text-gray-900">
+            of
+          </strong>{" "}
           {totalPages}
         </strong>
         <button
           className="px-5 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-red-300 dark:hover:bg-red-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium"
           disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+          onClick={() =>
+            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+          }
         >
           Next
         </button>
