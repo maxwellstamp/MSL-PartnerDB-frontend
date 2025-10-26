@@ -4,19 +4,16 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 
 // const API = `${
-//   process.env.NEXT_PUBLIC_API_URL ||
-//   "https://partnersdb-backend.onrender.com/api"
+//   process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api"
 // }/partners/`;
 
 // const UPLOAD_API = `${
-//   process.env.NEXT_PUBLIC_API_URL ||
-//   "http://127.0.0.1:8000/api"
-
+//   process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api"
 // }/upload-excel/`;
 
 const API = "http://127.0.0.1:8000/api/partners/";
 const UPLOAD_API = `http://127.0.0.1:8000/api/upload-excel/`;
-
+// "http://127.0.0.1:8000/api"
 const emptyForm = {
   firm_name: "",
   hq: "",
