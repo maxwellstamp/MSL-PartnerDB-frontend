@@ -181,9 +181,9 @@ export default function Page() {
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        {/* <button className="px-6 py-3 bg-red-700 text-white rounded-lg hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 transition-all font-medium">
+        <button className="px-6 py-3 bg-red-700 text-white rounded-lg hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 transition-all font-medium">
           Search
-        </button> */}
+        </button>
         <select
           className="w-full sm:w-auto px-4 py-3 rounded-lg bg-white border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all custom-dropdown appearance-none"
           value={hq}
