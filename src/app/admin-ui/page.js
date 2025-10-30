@@ -11,8 +11,9 @@ import axios from "axios";
 //   process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api"
 // }/upload-excel/`;
 
-const API = "https://msl-partnerdb-backend.onrender.com/api/partners";
-const UPLOAD_API = "https://msl-partnerdb-backend.onrender.com/api/upload-excel";
+const API = "https://msl-partnerdb-backend.onrender.com/api/partners/";
+const UPLOAD_API =
+  "https://msl-partnerdb-backend.onrender.com/api/upload-excel/";
 // "http://127.0.0.1:8000/api"
 const emptyForm = {
   firm_name: "",
