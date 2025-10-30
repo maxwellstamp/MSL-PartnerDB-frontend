@@ -5,7 +5,7 @@ import { FaEdit, FaTrashAlt, FaTimes, FaSearch } from "react-icons/fa";
 import Image from "next/image";
 
 // const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
-const API = "https://msl-partnerdb-backend.onrender.com/api/";
+const API = "https://msl-partnerdb-backend.onrender.com/api";
 
 export default function Page() {
   const [rows, setRows] = useState([]);
