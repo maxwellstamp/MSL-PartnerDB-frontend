@@ -293,6 +293,21 @@ export default function AdminUI() {
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">
+                Sector
+              </label>
+              <input
+                value={form.current_partnership_status}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    sector: e.target.value,
+                  })
+                }
+                className="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">
                 Focus Area
               </label>
               <textarea
