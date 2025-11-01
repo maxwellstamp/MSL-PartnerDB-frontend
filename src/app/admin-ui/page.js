@@ -82,7 +82,39 @@ export default function AdminUI() {
     );
   }, [rows, search]);
 
-  // Save new or edit partner
+  // helper: build a concise message from an error response (HTML or JSON)
+  const extractFriendlyMessageFromResponse = async (res) => {
+    try {
+      const ct = (res.headers.get?.("content-type") || "").toLowerCase();
+      if (ct.includes("application/json")) {
+        const data = await res.json();
+        return data.error || data.message || JSON.stringify(data);
+      }
+      const text = await res.text();
+      // common Django debug markers / useful phrases
+      const sslMatch = text.match(
+        /SSL connection has been closed unexpectedly/i
+      );
+      if (sslMatch)
+        return "Database error: SSL connection has been closed unexpectedly";
+      const opMatch = text.match(/OperationalError(?:[^<\n]*)/i);
+      if (opMatch) return opMatch[0];
+      const titleMatch = text.match(/<h1[^>]*>(.*?)<\/h1>/i);
+      if (titleMatch) return titleMatch[1].trim();
+      // fallback: strip tags and return a short excerpt
+      const stripped = text
+        .replace(/<[^>]+>/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      return stripped.length > 200
+        ? stripped.slice(0, 197) + "..."
+        : stripped || `HTTP ${res.status}`;
+    } catch (e) {
+      return `HTTP ${res.status}`;
+    }
+  };
+
+  // Save new or edit partner (improved error handling => friendly messages)
   const save = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -96,18 +128,23 @@ export default function AdminUI() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
+
       if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(
-          `HTTP error! Status: ${res.status}, Message: ${errorText}`
-        );
+        const friendly = await extractFriendlyMessageFromResponse(res);
+        setError(`Failed to save: ${friendly}`);
+        setLoading(false);
+        return;
       }
+
+      // success
       setForm(emptyForm);
       setEditingId(null);
+      setUploadMessage("Uploaded successfully!");
       await fetchRows();
     } catch (err) {
+      // network or unexpected error
       console.error("Error saving:", err);
-      setError(`Failed to save: ${err.message}`);
+      setError(`Failed to save: ${err?.message || String(err)}`);
     } finally {
       setLoading(false);
     }
@@ -183,9 +220,35 @@ export default function AdminUI() {
       await fetchRows();
     } catch (error) {
       console.error("Error uploading:", error);
-      setUploadMessage(error.response?.data?.error || "Upload failed");
+      // if backend returned HTML (Django debug page), try to extract a friendly message
+      const respData = error?.response?.data;
+      if (typeof respData === "string" && /<!doctype html/i.test(respData)) {
+        // try quick regex extraction (ssl/op/summary)
+        const sslMatch = respData.match(
+          /SSL connection has been closed unexpectedly/i
+        );
+        const opMatch = respData.match(/OperationalError(?:[^<\n]*)/i);
+        const titleMatch = respData.match(/<h1[^>]*>(.*?)<\/h1>/i);
+        const friendly = sslMatch
+          ? "Database error: SSL connection has been closed unexpectedly"
+          : opMatch
+          ? opMatch[0]
+          : titleMatch
+          ? titleMatch[1].trim()
+          : "Server error (see backend logs)";
+
+        setUploadMessage(friendly);
+        setError(friendly);
+      } else {
+        const friendly =
+          error.response?.data?.error ||
+          error.response?.data?.message ||
+          error.message ||
+          "Upload failed";
+        setUploadMessage(friendly);
+        setError(friendly);
+      }
       setUploadErrors([]);
-      setError(error.response?.data?.error || "Upload failed");
     } finally {
       setLoading(false);
     }
@@ -215,7 +278,7 @@ export default function AdminUI() {
             />
           </div>
 
-          <button
+          {/* <button
             onClick={() => {
               setEditingId(null);
               setForm(emptyForm);
@@ -225,7 +288,7 @@ export default function AdminUI() {
           >
             <FaPlus />
             New
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -233,6 +296,13 @@ export default function AdminUI() {
       {error && (
         <div className="mb-6 p-4 bg-red-50 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg">
           Error: {error}
+        </div>
+      )}
+
+      {/* Upload Status Display */}
+      {uploadMessage && (
+        <div className="mt-4 p-3 bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-200 rounded-md">
+          {uploadMessage}
         </div>
       )}
 
@@ -292,11 +362,9 @@ export default function AdminUI() {
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">
-                Sector
-              </label>
+              <label className="block text-xs text-gray-500 mb-1">Sector</label>
               <input
-                value={form.current_partnership_status}
+                value={form.sector}
                 onChange={(e) =>
                   setForm({
                     ...form,
@@ -335,7 +403,7 @@ export default function AdminUI() {
             <div className="flex gap-2 mt-2">
               <button
                 disabled={loading}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-500 transition"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-md  transition"
               >
                 {editingId ? (
                   <>
@@ -384,9 +452,9 @@ export default function AdminUI() {
               <div
                 className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
                   isDragging
-                    ? "border-indigo-500 bg-indigo-50/30 dark:bg-indigo-900/10"
+                    ? "border-red-500 bg-red-50/30 dark:bg-red-900/10"
                     : "border-gray-200 dark:border-gray-700"
-                } hover:border-indigo-400 dark:hover:border-indigo-500`}
+                } hover:border-red-400 dark:hover:border-red-500`}
                 onDragEnter={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -422,7 +490,7 @@ export default function AdminUI() {
                 />
                 <label htmlFor="file-upload" className="cursor-pointer">
                   <div className="flex flex-col items-center">
-                    <FaUpload className="text-3xl text-indigo-500 mb-3" />
+                    <FaUpload className="text-3xl text-blue-500 mb-3" />
                     <p className="text-sm text-gray-600 dark:text-gray-300">
                       {file
                         ? file.name
@@ -439,7 +507,7 @@ export default function AdminUI() {
                 <button
                   type="submit"
                   disabled={loading || !file}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-500 flex gap-2 items-center"
+                  className=" cursor-pointer px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-md flex gap-2 items-center"
                 >
                   Upload
                 </button>
@@ -455,12 +523,6 @@ export default function AdminUI() {
                   Clear
                 </button>
               </div>
-
-              {uploadMessage && (
-                <div className="mt-4 p-3 bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-200 rounded-md">
-                  {uploadMessage}
-                </div>
-              )}
 
               {uploadErrors.length > 0 && (
                 <div className="mt-4 p-3 bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-200 rounded-md">
